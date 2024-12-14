@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-time Chat</title>
+    <title>Enhanced Chat Application</title>
 
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -12,260 +12,510 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.3/purify.min.js"></script>
 
     <style>
+        /* Base Styles */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
+        :root {
+            --primary-color: #128C7E;
+            --secondary-color: #075E54;
+            --background-color: #f0f2f5;
+            --message-sent: #dcf8c6;
+            --message-received: #f0f0f0;
+            --text-primary: #333;
+            --text-secondary: #666;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Responsive Container */
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f0f2f5;
         }
 
-        .screen {
-            display: none;
-            padding: 20px;
-            border-radius: 8px;
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
         }
 
-        .screen.active {
-            display: block;
-        }
-
-        #messagesContainer {
-            height: 70vh;
-            overflow-y: auto;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            background-color: #fff;
-        }
-
-        .message {
-            max-width: 70%;
-            margin: 10px;
-            padding: 10px;
-            border-radius: 8px;
-            position: relative;
-            word-wrap: break-word;
-            cursor: pointer;
-        }
-
-        .message.sent {
-            background-color: #dcf8c6;
-            margin-left: auto;
-        }
-
-        .message.received {
-            background-color: #f0f0f0;
-            margin-right: auto;
-        }
-
-        .message-content {
-            margin-bottom: 5px;
-        }
-
-        .message-sender {
-            font-size: 0.8em;
-            color: #666;
-        }
-
-        .message-timestamp {
-            font-size: 0.7em;
-            color: #999;
-        }
-
-        .message-actions {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 100%;
-            background: white;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            z-index: 100;
-            padding: 5px 0;
-        }
-
-        .message.selected .message-actions {
-            display: block;
-        }
-
-        .message-actions button {
-            display: block;
-            width: 100%;
-            padding: 8px 15px;
-            border: none;
-            background: none;
-            text-align: left;
-            cursor: pointer;
-            color: #333;
-        }
-
-        .message-actions button:hover {
-            background-color: #f0f0f0;
-        }
-
-        .input-group {
-            margin-bottom: 15px;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            margin: 5px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-
-        button {
-            background-color: #128C7E;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 5px;
-        }
-
-        button:hover {
-            background-color: #075E54;
-        }
-
-        .join-options {
-            display: flex;
-            gap: 20px;
-            margin: 20px 0;
-        }
-
-        .join-option {
-            flex: 1;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: white;
-        }
-
-        #shareModal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            z-index: 1000;
-        }
-
-        .share-link {
-            background: #f5f5f5;
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-            word-break: break-all;
-        }
-
-        .system-message {
-            text-align: center;
-            color: #666;
-            margin: 10px 0;
-            font-style: italic;
-        }
-
-        .edit-input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-
-        #overlay {
+        /* Loading Animation */
+        .loading-overlay {
             display: none;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 999;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
         }
 
-        .edited-tag {
-            font-size: 0.7em;
-            color: #666;
-            margin-left: 5px;
-            font-style: italic;
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Screen Transitions */
+        .screen {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .screen.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Chat Interface */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-height: 100vh;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #messagesContainer {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            background: #e5ddd5;
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAACNiR0NAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAB/SURBVDhP7ZLBDYAgEAQpwVIswRIswRIswRIogXt5i4kxhINE/XiTSR47O8vl6IyILqmKnU8JKU7ACkiDVYwdgBVo4TXgBKyAHXgbOAEr0EJrwAlYgRZaA07ACrTQGnACVsBuewNOwArYbW/ACViB9T8Bz1dDQhfb5ZCaX4HuCAAAAABJRU5ErkJggg==');
+        }
+
+        .message {
+            max-width: 75%;
+            margin: 8px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            position: relative;
+            animation: messageAppear 0.3s ease;
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.sent {
+            background: var(--message-sent);
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message.received {
+            background: var(--message-received);
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-content {
+            word-wrap: break-word;
+        }
+
+        .message-image {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+
+        .message-actions {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: none;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .message.selected .message-actions {
+            display: block;
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 10px;
+            background: white;
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* Buttons */
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background: var(--secondary-color);
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .message {
+                max-width: 85%;
+            }
+
+            .input-area {
+                padding: 8px;
+            }
+
+            button {
+                padding: 8px 15px;
+            }
         }
     </style>
 </head>
+<!-- Continuing from Part 1 -->
 <body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Start Screen -->
     <div id="startScreen" class="screen active">
-        <h2>Chat Application</h2>
-        <div class="join-options">
-            <div class="join-option">
-                <h3>Create New Chat</h3>
-                <div class="input-group">
-                    <label for="userName">Your Name:</label>
-                    <input type="text" id="userName" required>
+        <div class="container">
+            <div class="welcome-card">
+                <h1>Welcome to Enhanced Chat</h1>
+                <div class="features-list">
+                    <p>✨ Real-time chat with AI assistance</p>
+                    <p>🎨 Generate images with AI</p>
+                    <p>🔒 Auto-delete messages on exit</p>
                 </div>
-                <div class="input-group">
-                    <label for="groupName">Group Name:</label>
-                    <input type="text" id="groupName" required>
+                <div class="join-options">
+                    <div class="join-option">
+                        <h3>Create New Chat</h3>
+                        <div class="input-group">
+                            <input type="text" id="userName" placeholder="Your Name" required>
+                            <input type="text" id="groupName" placeholder="Group Name" required>
+                            <button onclick="createChat()" class="primary-btn">Create Chat</button>
+                        </div>
+                    </div>
+                    <div class="join-option">
+                        <h3>Join Existing Chat</h3>
+                        <button onclick="showScreen('joinScreen')" class="secondary-btn">Join via Code</button>
+                    </div>
                 </div>
-                <button onclick="createChat()">Create Chat</button>
-            </div>
-            <div class="join-option">
-                <h3>Join Existing Chat</h3>
-                <button onclick="showScreen('joinScreen')">Join via Code</button>
             </div>
         </div>
     </div>
 
+    <!-- Join Screen -->
     <div id="joinScreen" class="screen">
-        <h2>Join Chat</h2>
-        <div class="input-group">
-            <label for="joinName">Your Name:</label>
-            <input type="text" id="joinName" required>
+        <div class="container">
+            <div class="join-card">
+                <h2>Join Chat</h2>
+                <div class="input-group">
+                    <input type="text" id="joinName" placeholder="Your Name" required>
+                    <input type="text" id="joinCode" placeholder="Enter chat code" required>
+                    <div class="button-group">
+                        <button onclick="joinChat()" class="primary-btn">Join Chat</button>
+                        <button onclick="showScreen('startScreen')" class="secondary-btn">Back</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="input-group">
-            <label for="joinCode">Chat Code:</label>
-            <input type="text" id="joinCode" placeholder="Enter chat code">
-        </div>
-        <button onclick="joinChat()">Join Chat</button>
-        <button onclick="showScreen('startScreen')">Back</button>
     </div>
 
+    <!-- Chat Screen -->
     <div id="chatScreen" class="screen">
-        <h2 id="groupNameDisplay"></h2>
-        <div id="messagesContainer"></div>
-        <div class="input-group">
-            <input type="text" id="messageInput" placeholder="Type your message...">
-            <button onclick="sendMessage()">Send</button>
-            <button onclick="showShareModal()">Share Chat</button>
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="header-info">
+                    <h2 id="groupNameDisplay"></h2>
+                    <span id="memberCount"></span>
+                </div>
+                <div class="header-actions">
+                    <button onclick="showShareModal()" class="icon-btn">
+                        <i class="fas fa-share-alt"></i>
+                    </button>
+                    <button onclick="leaveChat()" class="icon-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="messagesContainer" class="messages-container">
+                <!-- Messages will be inserted here -->
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Type a message... (/text: for AI, /image: for image generation)" autocomplete="off">
+                <button onclick="sendMessage()" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
         </div>
     </div>
 
-    <div id="overlay"></div>
-
-    <div id="shareModal">
-        <h3>Share Chat</h3>
-        <div id="qrcode"></div>
-        <div id="chatCodeDisplay"></div>
-        <div class="share-link" id="shareLinkDisplay"></div>
-        <button onclick="copyShareLink()" class="copy-button">Copy Link</button>
-        <button onclick="closeShareModal()">Close</button>
+    <!-- Share Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <h3>Share Chat</h3>
+            <div id="qrcode" class="qr-container"></div>
+            <div id="chatCodeDisplay" class="code-display"></div>
+            <div class="share-link" id="shareLinkDisplay"></div>
+            <div class="modal-actions">
+                <button onclick="copyShareLink()" class="copy-btn">Copy Link</button>
+                <button onclick="closeShareModal()" class="close-btn">Close</button>
+            </div>
+        </div>
     </div>
+
+    <!-- Image Preview Modal -->
+    <div id="imagePreviewModal" class="modal">
+        <div class="modal-content">
+            <img id="previewImage" src="" alt="Preview">
+            <button onclick="closeImagePreview()" class="close-btn">Close</button>
+        </div>
+    </div>
+
+    <!-- Additional CSS -->
+    <style>
+        /* Enhanced Animations and UI Components */
+        .welcome-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .features-list {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .features-list p {
+            margin: 10px 0;
+            color: #666;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px;
+            margin: 10px;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #90a4ae;
+            border-radius: 50%;
+            margin: 0 2px;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+        }
+
+        /* AI Message Styles */
+        .message.ai-response {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+
+        .message.ai-image {
+            max-width: 60%;
+        }
+
+        /* Modal Enhancements */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            max-width: 90%;
+            width: 400px;
+            animation: scaleIn 0.3s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .join-options {
+                flex-direction: column;
+            }
+
+            .join-option {
+                width: 100%;
+                margin: 10px 0;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+
+            .message.ai-image {
+                max-width: 85%;
+            }
+        }
+
+        /* Command Highlighting */
+        #messageInput[data-command="true"] {
+            background: #f0f8ff;
+            border-color: #2196f3;
+        }
+
+        /* Enhanced Button Styles */
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .send-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--primary-color);
+            transition: transform 0.2s ease;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <script>
         // Firebase Configuration
         const firebaseConfig = {
@@ -277,15 +527,17 @@
   appId: "1:908793958164:web:7ff3e7a3840716179ebc01",
   measurementId: "G-JCZCBYQTZ5",
         };
-    
-        // Initialize Firebase
+        
+        // Global Variables
         let app;
         let database;
         let currentUser = '';
         let currentChatId = '';
         let messageListenerRef = null;
-        let selectedMessage = null;
-    
+        let typingTimeout = null;
+        let isProcessingAI = false;
+        
+        // Initialize Firebase
         function initFirebase() {
             try {
                 app = firebase.initializeApp(firebaseConfig);
@@ -301,63 +553,75 @@
                 alert('Error connecting to chat service. Please try again later.');
             }
         }
-    
-        // Initialize Firebase immediately
-        initFirebase();
-    
+        
+        // Loading Handlers
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        // Screen Navigation
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
             });
             document.getElementById(screenId).classList.add('active');
         }
-    
+        
+        // Chat Creation
         async function createChat() {
             const userName = DOMPurify.sanitize(document.getElementById('userName').value.trim());
             const groupName = DOMPurify.sanitize(document.getElementById('groupName').value.trim());
-    
+        
             if (!userName || !groupName) {
                 alert('Please fill in all fields');
                 return;
             }
-    
-            currentUser = userName;
-            currentChatId = Math.random().toString(36).substring(2, 8);
-    
+        
+            showLoading();
             try {
+                currentUser = userName;
+                currentChatId = Math.random().toString(36).substring(2, 8);
+        
                 await database.ref(`chats/${currentChatId}`).set({
                     groupName: groupName,
                     createdAt: firebase.database.ServerValue.TIMESTAMP,
-                    members: {
-                        [userName]: true
-                    }
+                    members: { [userName]: true }
                 });
-    
+        
                 document.getElementById('groupNameDisplay').textContent = groupName;
                 showScreen('chatScreen');
                 listenToMessages();
-    
-                // Add welcome message
+                updateMemberCount();
+        
+                // Welcome message
                 await database.ref(`messages/${currentChatId}`).push({
-                    text: `Chat "${groupName}" created by ${userName}`,
+                    text: `Welcome to ${groupName}! Use /text: for AI assistance or /image: for image generation.`,
                     sender: 'System',
                     timestamp: firebase.database.ServerValue.TIMESTAMP
                 });
             } catch (error) {
                 console.error('Error creating chat:', error);
                 alert('Failed to create chat. Please try again.');
+            } finally {
+                hideLoading();
             }
         }
-    
+        
+        // Join Chat
         async function joinChat() {
             const joinName = DOMPurify.sanitize(document.getElementById('joinName').value.trim());
             const joinCode = DOMPurify.sanitize(document.getElementById('joinCode').value.trim());
-    
+        
             if (!joinName || !joinCode) {
                 alert('Please fill in all fields');
                 return;
             }
-    
+        
+            showLoading();
             try {
                 const chatRef = database.ref(`chats/${joinCode}`);
                 const chatSnapshot = await chatRef.once('value');
@@ -366,18 +630,19 @@
                     alert('Chat not found. Please check the code and try again.');
                     return;
                 }
-    
+        
                 currentUser = joinName;
                 currentChatId = joinCode;
-    
+        
                 await database.ref(`chats/${joinCode}/members/${joinName}`).set(true);
-    
+        
                 const chatData = chatSnapshot.val();
                 document.getElementById('groupNameDisplay').textContent = chatData.groupName;
                 showScreen('chatScreen');
                 listenToMessages();
-    
-                // Announce new user
+                updateMemberCount();
+        
+                // Join announcement
                 await database.ref(`messages/${joinCode}`).push({
                     text: `${joinName} joined the chat`,
                     sender: 'System',
@@ -386,245 +651,406 @@
             } catch (error) {
                 console.error('Error joining chat:', error);
                 alert('Failed to join chat. Please try again.');
+            } finally {
+                hideLoading();
             }
         }
-    
-        function listenToMessages() {
-            if (!database || !currentChatId) return;
-    
-            if (messageListenerRef) {
-                messageListenerRef.off();
-            }
-    
-            messageListenerRef = database.ref(`messages/${currentChatId}`).limitToLast(50);
-            
-            messageListenerRef.on('child_added', (snapshot) => {
-                const message = snapshot.val();
-                appendMessage(message, snapshot.key);
-                scrollToBottom();
-            });
-    
-            messageListenerRef.on('child_changed', (snapshot) => {
-                const message = snapshot.val();
-                updateMessage(message, snapshot.key);
-            });
-    
-            messageListenerRef.on('child_removed', (snapshot) => {
-                removeMessage(snapshot.key);
-            });
-        }
-    
-        function appendMessage(message, messageId) {
-            const messagesContainer = document.getElementById('messagesContainer');
-            const messageElement = createMessageElement(message, messageId);
-            messagesContainer.appendChild(messageElement);
-        }
-    
-        function createMessageElement(message, messageId) {
-            const messageElement = document.createElement('div');
-            messageElement.id = `message-${messageId}`;
-            messageElement.className = `message ${message.sender === currentUser ? 'sent' : 'received'}`;
-            
-            const sanitizedText = DOMPurify.sanitize(message.text);
-            const sanitizedSender = DOMPurify.sanitize(message.sender);
-            
-            if (message.sender === 'System') {
-                messageElement.className = 'system-message';
-                messageElement.innerHTML = `<div>${sanitizedText}</div>`;
-                return messageElement;
-            }
-    
-            messageElement.innerHTML = `
-                <div class="message-content">${sanitizedText}</div>
-                <div class="message-sender">${sanitizedSender}</div>
-                ${message.edited ? '<span class="edited-tag">(edited)</span>' : ''}
-                <div class="message-actions">
-                    <button onclick="copyMessage('${messageId}')">Copy</button>
-                    ${message.sender === currentUser ? `
-                        <button onclick="editMessage('${messageId}')">Edit</button>
-                        <button onclick="deleteMessage('${messageId}')">Delete</button>
-                    ` : `
-                        <button onclick="deleteForMe('${messageId}')">Delete for me</button>
-                    `}
-                </div>
-            `;
-    
-            messageElement.addEventListener('click', () => toggleMessageActions(messageId));
-            return messageElement;
-        }
-    
-        function toggleMessageActions(messageId) {
-            if (selectedMessage) {
-                selectedMessage.classList.remove('selected');
-            }
-            const messageElement = document.getElementById(`message-${messageId}`);
-            if (messageElement !== selectedMessage) {
-                messageElement.classList.add('selected');
-                selectedMessage = messageElement;
-            } else {
-                selectedMessage = null;
-            }
-        }
-    
-        function copyMessage(messageId) {
-            const messageElement = document.getElementById(`message-${messageId}`);
-            const messageText = messageElement.querySelector('.message-content').textContent;
-            navigator.clipboard.writeText(messageText)
-                .then(() => alert('Message copied!'))
-                .catch(err => console.error('Failed to copy message:', err));
-            toggleMessageActions(messageId);
-        }
-    
-        async function editMessage(messageId) {
-            const messageElement = document.getElementById(`message-${messageId}`);
-            const messageContent = messageElement.querySelector('.message-content');
-            const currentText = messageContent.textContent;
-    
-            const newText = prompt('Edit message:', currentText);
-            if (newText && newText !== currentText) {
-                try {
-                    await database.ref(`messages/${currentChatId}/${messageId}`).update({
-                        text: newText,
-                        edited: true
-                    });
-                } catch (error) {
-                    console.error('Error editing message:', error);
-                    alert('Failed to edit message');
-                }
-            }
-            toggleMessageActions(messageId);
-        }
-    
-        async function deleteMessage(messageId) {
-            if (confirm('Are you sure you want to delete this message?')) {
-                try {
-                    await database.ref(`messages/${currentChatId}/${messageId}`).remove();
-                } catch (error) {
-                    console.error('Error deleting message:', error);
-                    alert('Failed to delete message');
-                }
-            }
-            toggleMessageActions(messageId);
-        }
-    
-        function deleteForMe(messageId) {
-            const messageElement = document.getElementById(`message-${messageId}`);
-            if (messageElement) {
-                messageElement.remove();
-            }
-            toggleMessageActions(messageId);
-        }
-    
-        function updateMessage(message, messageId) {
-            const messageElement = document.getElementById(`message-${messageId}`);
-            if (messageElement) {
-                messageElement.innerHTML = createMessageElement(message, messageId).innerHTML;
-            }
-        }
-    
-        function removeMessage(messageId) {
-            const messageElement = document.getElementById(`message-${messageId}`);
-            if (messageElement) {
-                messageElement.remove();
-            }
-        }
-    
-        function sendMessage() {
+        
+        // Message Handling
+        async function sendMessage() {
             const messageInput = document.getElementById('messageInput');
             const message = DOMPurify.sanitize(messageInput.value.trim());
-    
+        
             if (!message) return;
-    
-            database.ref(`messages/${currentChatId}`).push({
-                text: message,
-                sender: currentUser,
-                timestamp: firebase.database.ServerValue.TIMESTAMP
-            }).then(() => {
+        
+            const isCommand = message.startsWith('/text:') || message.startsWith('/image:');
+            
+            if (isCommand) {
+                handleCommand(message);
+                return;
+            }
+        
+            try {
+                await database.ref(`messages/${currentChatId}`).push({
+                    text: message,
+                    sender: currentUser,
+                    timestamp: firebase.database.ServerValue.TIMESTAMP
+                });
                 messageInput.value = '';
-            }).catch(error => {
+            } catch (error) {
                 console.error('Error sending message:', error);
-                alert('Failed to send message');
-            });
-        }
-    
-        function showShareModal() {
-            const modal = document.getElementById('shareModal');
-            const overlay = document.getElementById('overlay');
-            const qrcodeContainer = document.getElementById('qrcode');
-            const chatCodeDisplay = document.getElementById('chatCodeDisplay');
-            const shareLinkDisplay = document.getElementById('shareLinkDisplay');
-            
-            qrcodeContainer.innerHTML = '';
-            const shareLink = `${window.location.origin}${window.location.pathname}?code=${currentChatId}`;
-            
-            chatCodeDisplay.textContent = `Chat Code: ${currentChatId}`;
-            shareLinkDisplay.textContent = shareLink;
-            
-            new QRCode(qrcodeContainer, {
-                text: shareLink,
-                width: 128,
-                height: 128
-            });
-    
-            modal.style.display = 'block';
-            overlay.style.display = 'block';
-        }
-    
-        function closeShareModal() {
-            document.getElementById('shareModal').style.display = 'none';
-            document.getElementById('overlay').style.display = 'none';
-        }
-    
-        function copyShareLink() {
-            const shareLinkDisplay = document.getElementById('shareLinkDisplay');
-            navigator.clipboard.writeText(shareLinkDisplay.textContent)
-                .then(() => alert('Link copied to clipboard!'))
-                .catch(err => console.error('Failed to copy link:', err));
-        }
-    
-        // Handle enter key in message input
-        document.getElementById('messageInput')?.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
+                alert('Failed to send message. Please try again.');
             }
-        });
-    
-        // Close message actions when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.message')) {
-                if (selectedMessage) {
-                    selectedMessage.classList.remove('selected');
-                    selectedMessage = null;
+        }
+        
+        // Command Processing
+        async function handleCommand(message) {
+            if (isProcessingAI) {
+                alert('Please wait for the current AI request to complete.');
+                return;
+            }
+        
+            isProcessingAI = true;
+            const messageInput = document.getElementById('messageInput');
+            const command = message.substring(0, 6).toLowerCase();
+            const prompt = message.substring(6).trim();
+        
+            if (!prompt) {
+                alert('Please provide a prompt after the command.');
+                isProcessingAI = false;
+                return;
+            }
+        
+            showLoading();
+            try {
+                if (command === '/text:') {
+                    const response = await queryAI(prompt);
+                    await sendAIResponse(response);
+                } else if (command === '/image') {
+                    const imageUrl = await queryImage(prompt);
+                    if (imageUrl) {
+                        await sendImageMessage(imageUrl, prompt);
+                    }
                 }
+            } catch (error) {
+                console.error('Error processing command:', error);
+                alert('Failed to process command. Please try again.');
+            } finally {
+                messageInput.value = '';
+                hideLoading();
+                isProcessingAI = false;
             }
+        }
+        
+        // AI Integration
+        async function queryAI(prompt) {
+            const url = 'https://api.hyperbolic.xyz/v1/chat/completions';
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJoYXJzaGVldGd1bmRlY2hhOTg0QGdtYWlsLmNvbSIsImlhdCI6MTczMjQyMDU2OH0.nvFjZsVEC-GuusTOAcBsRnUyTzSvI5qxNYS9_KYBg7s'
+                    },
+                    body: JSON.stringify({
+                        model: 'meta-llama/Llama-3.2-3B-Instruct',
+                        messages: [{ role: 'user', content: prompt }],
+                        max_tokens: 1024,
+                        temperature: 0.7
+                    })
+                });
+                const data = await response.json();
+                return data.choices[0]?.message?.content || 'No response from AI.';
+            } catch (error) {
+                console.error('Error querying AI:', error);
+                return 'Error fetching AI response.';
+            }
+        }
+        // Image Generation
+async function queryImage(prompt) {
+    const imageUrl = 'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell';
+    try {
+        const response = await fetch(imageUrl, {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer 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',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ inputs: prompt })
         });
-    
-        // Initialize on page load
-        window.onload = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const sharedCode = urlParams.get('code');
-            
-            if (sharedCode) {
-                document.getElementById('joinCode').value = sharedCode;
-                showScreen('joinScreen');
-            }
-        };
-    
-        // Handle user leaving
-        window.addEventListener('beforeunload', async () => {
-            if (currentChatId && currentUser) {
-                try {
-                    await database.ref(`messages/${currentChatId}`).push({
-                        text: `${currentUser} left the chat`,
-                        sender: 'System',
-                        timestamp: firebase.database.ServerValue.TIMESTAMP
-                    });
-                } catch (error) {
-                    console.error('Error sending leave message:', error);
-                }
-            }
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+    } catch (error) {
+        console.error('Error generating image:', error);
+        return '';
+    }
+}
+
+// Send AI Responses
+async function sendAIResponse(response) {
+    try {
+        await database.ref(`messages/${currentChatId}`).push({
+            text: response,
+            sender: 'AI Assistant',
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            isAI: true
         });
-    </script>
-    </body>
-    </html>
+    } catch (error) {
+        console.error('Error sending AI response:', error);
+        alert('Failed to send AI response.');
+    }
+}
+
+async function sendImageMessage(imageUrl, prompt) {
+    try {
+        await database.ref(`messages/${currentChatId}`).push({
+            text: prompt,
+            imageUrl: imageUrl,
+            sender: 'AI Image Generator',
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            isAI: true,
+            isImage: true
+        });
+    } catch (error) {
+        console.error('Error sending image message:', error);
+        alert('Failed to send generated image.');
+    }
+}
+
+// Real-time Message Handling
+function listenToMessages() {
+    if (!currentChatId) return;
+
+    if (messageListenerRef) {
+        messageListenerRef.off();
+    }
+
+    messageListenerRef = database.ref(`messages/${currentChatId}`);
     
+    messageListenerRef.on('child_added', (snapshot) => {
+        const message = snapshot.val();
+        appendMessage(message, snapshot.key);
+        scrollToBottom();
+    });
+
+    messageListenerRef.on('child_changed', (snapshot) => {
+        updateMessage(message, snapshot.key);
+    });
+
+    messageListenerRef.on('child_removed', (snapshot) => {
+        removeMessage(snapshot.key);
+    });
+}
+
+// Message UI Functions
+function appendMessage(message, messageId) {
+    const messagesContainer = document.getElementById('messagesContainer');
+    const messageElement = createMessageElement(message, messageId);
+    messagesContainer.appendChild(messageElement);
+    scrollToBottom();
+}
+
+function createMessageElement(message, messageId) {
+    const messageElement = document.createElement('div');
+    messageElement.id = `message-${messageId}`;
+    messageElement.className = `message ${message.sender === currentUser ? 'sent' : 'received'}`;
+    if (message.isAI) messageElement.classList.add('ai-response');
+    
+    let messageContent = '';
+    
+    if (message.sender === 'System') {
+        messageElement.className = 'system-message';
+        messageContent = `<div class="message-content">${DOMPurify.sanitize(message.text)}</div>`;
+    } else {
+        messageContent = `
+            <div class="message-content">${DOMPurify.sanitize(message.text)}</div>
+            ${message.imageUrl ? `<img src="${message.imageUrl}" class="message-image" onclick="previewImage('${message.imageUrl}')">` : ''}
+            <div class="message-info">
+                <span class="message-sender">${DOMPurify.sanitize(message.sender)}</span>
+                <span class="message-timestamp">${formatTimestamp(message.timestamp)}</span>
+            </div>
+            ${message.edited ? '<span class="edited-tag">(edited)</span>' : ''}
+            <div class="message-actions">
+                <button onclick="copyMessage('${messageId}')">Copy</button>
+                ${message.sender === currentUser ? `
+                    <button onclick="editMessage('${messageId}')">Edit</button>
+                    <button onclick="deleteMessage('${messageId}')">Delete</button>
+                ` : `
+                    <button onclick="deleteForMe('${messageId}')">Delete for me</button>
+                `}
+            </div>
+        `;
+    }
+
+    messageElement.innerHTML = messageContent;
+    
+    if (!message.isSystem) {
+        messageElement.addEventListener('click', () => toggleMessageActions(messageId));
+    }
+    
+    return messageElement;
+}
+
+// Message Actions
+function toggleMessageActions(messageId) {
+    const allMessages = document.querySelectorAll('.message');
+    allMessages.forEach(msg => {
+        if (msg.id !== `message-${messageId}`) {
+            msg.classList.remove('selected');
+        }
+    });
+    
+    const messageElement = document.getElementById(`message-${messageId}`);
+    messageElement.classList.toggle('selected');
+}
+
+async function copyMessage(messageId) {
+    const messageElement = document.getElementById(`message-${messageId}`);
+    const messageText = messageElement.querySelector('.message-content').textContent;
+    
+    try {
+        await navigator.clipboard.writeText(messageText);
+        showToast('Message copied!');
+    } catch (error) {
+        console.error('Failed to copy message:', error);
+        alert('Failed to copy message');
+    }
+    
+    toggleMessageActions(messageId);
+}
+
+async function editMessage(messageId) {
+    const messageRef = database.ref(`messages/${currentChatId}/${messageId}`);
+    const snapshot = await messageRef.once('value');
+    const message = snapshot.val();
+    
+    const newText = prompt('Edit message:', message.text);
+    if (newText && newText !== message.text) {
+        try {
+            await messageRef.update({
+                text: newText,
+                edited: true,
+                editedAt: firebase.database.ServerValue.TIMESTAMP
+            });
+            showToast('Message updated');
+        } catch (error) {
+            console.error('Error editing message:', error);
+            alert('Failed to edit message');
+        }
+    }
+    
+    toggleMessageActions(messageId);
+}
+
+async function deleteMessage(messageId) {
+    if (confirm('Are you sure you want to delete this message?')) {
+        try {
+            await database.ref(`messages/${currentChatId}/${messageId}`).remove();
+            showToast('Message deleted');
+        } catch (error) {
+            console.error('Error deleting message:', error);
+            alert('Failed to delete message');
+        }
+    }
+    toggleMessageActions(messageId);
+}
+
+function deleteForMe(messageId) {
+    const messageElement = document.getElementById(`message-${messageId}`);
+    if (messageElement) {
+        messageElement.remove();
+        showToast('Message deleted for you');
+    }
+    toggleMessageActions(messageId);
+}
+
+// Utility Functions
+function formatTimestamp(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function scrollToBottom() {
+    const messagesContainer = document.getElementById('messagesContainer');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }, 100);
+}
+
+// Share Functionality
+function showShareModal() {
+    const modal = document.getElementById('shareModal');
+    const qrcodeContainer = document.getElementById('qrcode');
+    const chatCodeDisplay = document.getElementById('chatCodeDisplay');
+    const shareLinkDisplay = document.getElementById('shareLinkDisplay');
+    
+    qrcodeContainer.innerHTML = '';
+    const shareLink = `${window.location.origin}${window.location.pathname}?code=${currentChatId}`;
+    
+    chatCodeDisplay.textContent = `Chat Code: ${currentChatId}`;
+    shareLinkDisplay.textContent = shareLink;
+    
+    new QRCode(qrcodeContainer, {
+        text: shareLink,
+        width: 128,
+        height: 128
+    });
+    
+    modal.style.display = 'block';
+}
+
+function closeShareModal() {
+    document.getElementById('shareModal').style.display = 'none';
+}
+
+// Auto Cleanup
+async function cleanupChat() {
+    if (currentChatId) {
+        try {
+            await database.ref(`messages/${currentChatId}`).remove();
+            await database.ref(`chats/${currentChatId}`).remove();
+        } catch (error) {
+            console.error('Error cleaning up chat:', error);
+        }
+    }
+}
+
+// Event Listeners
+document.getElementById('messageInput')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+document.getElementById('messageInput')?.addEventListener('input', function(e) {
+    const input = e.target;
+    const isCommand = input.value.startsWith('/text:') || input.value.startsWith('/image:');
+    input.dataset.command = isCommand;
+});
+
+window.addEventListener('beforeunload', async (e) => {
+    if (currentChatId && currentUser) {
+        await database.ref(`messages/${currentChatId}`).push({
+            text: `${currentUser} left the chat`,
+            sender: 'System',
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        
+        await database.ref(`chats/${currentChatId}/members/${currentUser}`).remove();
+        
+        const membersSnapshot = await database.ref(`chats/${currentChatId}/members`).once('value');
+        if (!membersSnapshot.exists() || Object.keys(membersSnapshot.val()).length === 0) {
+            await cleanupChat();
+        }
+    }
+});
+
+// Initialize
+window.onload = () => {
+    initFirebase();
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedCode = urlParams.get('code');
+    
+    if (sharedCode) {
+        document.getElementById('joinCode').value = sharedCode;
+        showScreen('joinScreen');
+    }
+};
+</script>
+</body>
+</html>
+
